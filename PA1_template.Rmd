@@ -53,7 +53,7 @@ We begin with a time series plot of the 5-minute interval (x-axis) and the avera
 ```{r}
 mean_interval <- aggregate(df$steps, by=list(df$interval), mean, na.rm=TRUE)
 with(mean_interval, plot(Group.1, x, type = 'l',
-     xlab = 'Interval',ylab = 'Mean steps taken', main = 'Daily Activity Series'))
+     xlab = 'Interval',ylab = 'Mean steps taken', main = 'Averaged Activity Series'))
 ```
 
 Let's check which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps. According to the plot, it has to be a value between $5:50$ AM and $10$ AM, which corresponds to a number between $9$ AM and $4$ PM. 
@@ -87,24 +87,30 @@ hist(Steps$x, border = 'beige', main = 'Histogram of steps per day',
      xlab = 'Total steps', ylab = 'Frequency',
      breaks = 20
      )
-data.frame('Statistics'=c( mean(Steps$x), median(Steps$x) ), 
-           row.names = c('Mean','Median') ) 
+data.frame('Statistics' = c( mean(Steps$x), median(Steps$x) ), 
+           row.names    = c('Mean','Median') ) 
 ```
 We can clearly see a difference both in the reported histogram and in the statistics. The impact of imputing missing data on the estimates of the total daily number of steps is a higher mean and median, and an histogram that now has values in previously empty columns.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-
-
-
-
-
-
-
+To answer this question, we first add a new factor variable to the data indicating whether the date for each observation is a weekday or weekend.
 ```{r}
-
+dg$day <- as.factor(weekdays(dg$date) %in% c("Saturday", "Sunday"))
+levels(dg$day) <- c("weekday", "weekend")
+summary(dg$day)
 ```
 
+Finally let's plot each type of day with respect to the interval data as we did before.
+```{r}
+library(ggplot2)
 
+mean_day <- aggregate(dg$steps, by=list(dg$interval, dg$day), mean)
+
+qplot(Group.1, x, data = mean_day, facets = .~Group.2, main = 'Aggregated Activity Series',
+      geom = 'line', xlab = 'Interval', ylab = 'Number of steps')
+```
+
+At last, it can be seen from the plot that the subject is more active on week days during the same time interval that we found earlier. 
 
 

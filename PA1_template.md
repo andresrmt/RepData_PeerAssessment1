@@ -88,7 +88,7 @@ We begin with a time series plot of the 5-minute interval (x-axis) and the avera
 ```r
 mean_interval <- aggregate(df$steps, by=list(df$interval), mean, na.rm=TRUE)
 with(mean_interval, plot(Group.1, x, type = 'l',
-     xlab = 'Interval',ylab = 'Mean steps taken', main = 'Daily Activity Series'))
+     xlab = 'Interval',ylab = 'Mean steps taken', main = 'Averaged Activity Series'))
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
@@ -121,12 +121,12 @@ sum(is.na(df))
 ```
 Those are a lot of values, approximately 13.1147541% of the dataset. 
 
-Now let's replace NA's. Here we will use the following strategy: We will replace each NA with the median of its corresponding 5-minute interval over all days. However, if the median is not available, we will use 0 as replacement.
+Now let's replace NA's. Here we will use the following strategy: We will replace each NA with the median of its corresponding 5-minute interval over all days. However, if the median is not available, we will use $1$ step as replacement.
 
 ```r
 mi <- aggregate(df$steps, by=list(df$interval), median, na.rm=TRUE)
 dg <- df
-dg[is.na(dg$steps),'steps'] <- match(dg[is.na(dg$steps),"interval"],mi$x, nomatch = 0)
+dg[is.na(dg$steps),'steps'] <- match(dg[is.na(dg$steps),"interval"],mi$x, nomatch = 1)
 ```
 
 Similarly as before, we make a histogram of the total number of steps taken each day and calculate and report the mean and median total number of steps taken per day.
@@ -142,18 +142,45 @@ hist(Steps$x, border = 'beige', main = 'Histogram of steps per day',
 ![](PA1_template_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 ```r
-data.frame('Statistics'=c( mean(Steps$x), median(Steps$x) ), 
-           row.names = c('Mean','Median') ) 
+data.frame('Statistics' = c( mean(Steps$x), median(Steps$x) ), 
+           row.names    = c('Mean','Median') ) 
 ```
 
 ```
 ##        Statistics
-## Mean     9456.262
+## Mean     9493.115
 ## Median  10395.000
 ```
-
-
-
-
+We can clearly see a difference both in the reported histogram and in the statistics. The impact of imputing missing data on the estimates of the total daily number of steps is a higher mean and median, and an histogram that now has values in previously empty columns.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+To answer this question, we first add a new factor variable to the data indicating whether the date for each observation is a weekday or weekend.
+
+```r
+dg$day <- as.factor(weekdays(dg$date) %in% c("Saturday", "Sunday"))
+levels(dg$day) <- c("weekday", "weekend")
+summary(dg$day)
+```
+
+```
+## weekday weekend 
+##   12960    4608
+```
+
+Finally let's plot each type of day with respect to the interval data as we did before.
+
+```r
+library(ggplot2)
+
+mean_day <- aggregate(dg$steps, by=list(dg$interval, dg$day), mean)
+
+qplot(Group.1, x, data = mean_day, facets = .~Group.2, main = 'Aggregated Activity Series',
+      geom = 'line', xlab = 'Interval', ylab = 'Number of steps')
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+At last, it can be seen from the plot that the subject is more active on week days during the same time interval that we found earlier. 
+
+
